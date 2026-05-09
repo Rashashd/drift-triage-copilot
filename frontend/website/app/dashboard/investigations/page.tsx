@@ -117,68 +117,66 @@ export default function InvestigationsPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((inv) => (
-                <tr
-                  key={inv.id}
-                  className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer"
-                  onClick={() => setSelected(selected?.id === inv.id ? null : inv)}
-                >
-                  <td className="px-4 py-3 font-mono text-[11px] text-white/40">
-                    {new Date(inv.created_at).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge label={inv.severity} colorClass={SEVERITY_COLORS[inv.severity] ?? "text-white/40 bg-white/[0.04] border-white/[0.06]"} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge label={inv.status} colorClass={STATUS_COLORS[inv.status] ?? "text-white/40 bg-white/[0.04] border-white/[0.06]"} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] text-white/40">{inv.action_decided ?? "—"}</span>
-                      {hilOutcome(inv) === "approved" && (
-                        <span className="px-1.5 py-0.5 rounded border text-[9px] font-mono text-[#4ade80] bg-[#4ade80]/8 border-[#4ade80]/20">approved</span>
-                      )}
-                      {hilOutcome(inv) === "rejected" && (
-                        <span className="px-1.5 py-0.5 rounded border text-[9px] font-mono text-[#f87171] bg-[#f87171]/8 border-[#f87171]/20">rejected</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 max-w-[280px]">
-                    {inv.summary
-                      ? <span className="text-[11px] text-white/45 leading-snug line-clamp-2">{inv.summary}</span>
-                      : <span className="text-[11px] text-white/15 font-mono">—</span>
-                    }
-                  </td>
-                  <td className="px-4 py-3 text-white/20 text-[11px] font-mono shrink-0">{inv.id.slice(0, 8)}</td>
-                </tr>
-              ))}
+              {items.map((inv) => {
+                const isSelected = selected?.id === inv.id
+                return (
+                  <>
+                    <tr
+                      key={inv.id}
+                      className={`border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer ${isSelected ? "bg-white/[0.02]" : ""}`}
+                      onClick={() => setSelected(isSelected ? null : inv)}
+                    >
+                      <td className="px-4 py-3 font-mono text-[11px] text-white/40">
+                        {new Date(inv.created_at).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge label={inv.severity} colorClass={SEVERITY_COLORS[inv.severity] ?? "text-white/40 bg-white/[0.04] border-white/[0.06]"} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge label={inv.status} colorClass={STATUS_COLORS[inv.status] ?? "text-white/40 bg-white/[0.04] border-white/[0.06]"} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[11px] text-white/40">{inv.action_decided ?? "—"}</span>
+                          {hilOutcome(inv) === "approved" && (
+                            <span className="px-1.5 py-0.5 rounded border text-[9px] font-mono text-[#4ade80] bg-[#4ade80]/8 border-[#4ade80]/20">approved</span>
+                          )}
+                          {hilOutcome(inv) === "rejected" && (
+                            <span className="px-1.5 py-0.5 rounded border text-[9px] font-mono text-[#f87171] bg-[#f87171]/8 border-[#f87171]/20">rejected</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 max-w-[280px]">
+                        {inv.summary
+                          ? <span className="text-[11px] text-white/45 leading-snug line-clamp-2">{inv.summary}</span>
+                          : <span className="text-[11px] text-white/15 font-mono">—</span>
+                        }
+                      </td>
+                      <td className="px-4 py-3 text-white/20 text-[11px] font-mono shrink-0">{inv.id.slice(0, 8)}</td>
+                    </tr>
+                    {isSelected && (
+                      <tr key={`${inv.id}-detail`} className="border-b border-white/[0.05]">
+                        <td colSpan={6} className="px-6 py-5 bg-white/[0.015]">
+                          {inv.summary && (
+                            <div className="mb-4 pb-4 border-b border-white/[0.05]">
+                              <p className="text-[10px] font-mono text-white/25 uppercase tracking-widest mb-1.5">Summary</p>
+                              <p className="text-sm text-white/60 leading-relaxed">{inv.summary}</p>
+                            </div>
+                          )}
+                          {inv.resolution && (
+                            <div className="mb-1">
+                              <p className="text-[10px] font-mono text-white/25 uppercase tracking-widest mb-1.5">Resolution</p>
+                              <p className="text-sm text-white/70 leading-relaxed">{inv.resolution}</p>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                )
+              })}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* Detail drawer */}
-      {selected && (
-        <div className="mt-4 rounded-[1.5rem] border border-white/[0.08] bg-white/[0.02] p-6">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[11px] font-mono text-white/30">Investigation {selected.id}</p>
-            <button onClick={() => setSelected(null)} className="text-white/30 hover:text-white/60 text-lg">×</button>
-          </div>
-          {selected.summary && (
-            <div className="mb-4 pb-4 border-b border-white/[0.05]">
-              <p className="text-[10px] font-mono text-white/25 uppercase tracking-widest mb-1.5">Summary</p>
-              <p className="text-sm text-white/60 leading-relaxed">{selected.summary}</p>
-            </div>
-          )}
-          {selected.resolution && (
-            <div className="mb-4 pb-4 border-b border-white/[0.05]">
-              <p className="text-[10px] font-mono text-white/25 uppercase tracking-widest mb-1.5">Resolution</p>
-              <p className="text-sm text-white/70 leading-relaxed">{selected.resolution}</p>
-            </div>
-          )}
-          <pre className="text-[11px] text-white/35 font-mono overflow-auto">
-            {JSON.stringify(selected, null, 2)}
-          </pre>
         </div>
       )}
     </div>
