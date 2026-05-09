@@ -36,6 +36,9 @@ Thumbs.db
 *.json
 *.zip
 
+# Test trajectory snapshots must be tracked despite the *.json rule above
+!backend/tests/trajectories/*.json
+
 # Trained model binaries — these belong in MLflow, not git
 *.pkl
 *.joblib
@@ -84,4 +87,3 @@ frontend/website/.next/
 # Cache
 .cache/
 .parcel-cache/
-
