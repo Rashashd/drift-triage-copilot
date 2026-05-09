@@ -1,4 +1,4 @@
-﻿{
+{
   "nodes": ["supervisor", "triage", "supervisor", "action", "supervisor", "dispatch", "supervisor", "comms", "supervisor"],
   "interrupted": false,
   "expected_state": {

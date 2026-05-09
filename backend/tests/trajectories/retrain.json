@@ -1,4 +1,4 @@
-﻿{
+{
   "phase1_nodes": ["supervisor", "triage", "supervisor"],
   "interrupted": true,
   "phase2_nodes": ["action", "supervisor", "dispatch", "supervisor", "comms", "supervisor"],
