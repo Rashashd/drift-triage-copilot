@@ -7,6 +7,7 @@ type HILItem = {
   id: string
   investigation_id: string
   proposed_action: string
+  reasoning: string | null
   status: string
   approver_user_id: string | null
   created_at: string
@@ -141,6 +142,12 @@ export default function HILPage() {
                     <p className="text-sm font-mono text-white/40">{new Date(item.created_at).toLocaleString()}</p>
                   </div>
                 </div>
+                {item.reasoning && (
+                  <div className="mb-5 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                    <p className="text-[10px] font-mono text-white/25 uppercase tracking-widest mb-2">Agent reasoning</p>
+                    <p className="text-sm text-white/55 leading-relaxed">{item.reasoning}</p>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => act(item.id, "approve")}

@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.agents.llm import LLMClient, call_action_llm
 from app.agents.state import InvestigationState
-from app.db.models import HILInboxItem
+from app.db.models import HILInboxItem, Investigation
 from app.services.idempotency import compute_key
 
 
@@ -31,10 +31,14 @@ async def action_node(state: InvestigationState, config: RunnableConfig) -> dict
                 hil_item = HILInboxItem(
                     investigation_id=uuid.UUID(state["investigation_id"]),
                     proposed_action=action,
+                    reasoning=result.reasoning,
                     idempotency_key=updates["idempotency_key"],
                     status="pending",
                 )
                 session.add(hil_item)
+                investigation = await session.get(Investigation, uuid.UUID(state["investigation_id"]))
+                if investigation:
+                    investigation.status = "pending_approval"
                 await session.commit()
         except IntegrityError:
             pass  # node re-ran on resume — HIL item already exists

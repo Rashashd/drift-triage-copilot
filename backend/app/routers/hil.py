@@ -25,6 +25,7 @@ class HILItemOut(BaseModel):
     id: uuid.UUID
     investigation_id: uuid.UUID
     proposed_action: str
+    reasoning: str | None
     idempotency_key: str
     status: str
     approver_user_id: str | None

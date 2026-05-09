@@ -30,6 +30,13 @@ const STATUS_COLORS: Record<string, string> = {
   resolved: "text-white/30 bg-white/[0.04] border-white/[0.06]",
 }
 
+function hilOutcome(inv: Investigation): "approved" | "rejected" | null {
+  if (inv.status !== "resolved" || !inv.action_decided) return null
+  if (inv.resolution?.toLowerCase().includes("rejected")) return "rejected"
+  if (inv.action_decided === "no_op") return null
+  return "approved"
+}
+
 function Badge({ label, colorClass }: { label: string; colorClass: string }) {
   return (
     <span className={`px-2 py-0.5 rounded-md border text-[10px] font-mono ${colorClass}`}>
@@ -125,7 +132,17 @@ export default function InvestigationsPage() {
                   <td className="px-4 py-3">
                     <Badge label={inv.status} colorClass={STATUS_COLORS[inv.status] ?? "text-white/40 bg-white/[0.04] border-white/[0.06]"} />
                   </td>
-                  <td className="px-4 py-3 font-mono text-[11px] text-white/40">{inv.action_decided ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[11px] text-white/40">{inv.action_decided ?? "—"}</span>
+                      {hilOutcome(inv) === "approved" && (
+                        <span className="px-1.5 py-0.5 rounded border text-[9px] font-mono text-[#4ade80] bg-[#4ade80]/8 border-[#4ade80]/20">approved</span>
+                      )}
+                      {hilOutcome(inv) === "rejected" && (
+                        <span className="px-1.5 py-0.5 rounded border text-[9px] font-mono text-[#f87171] bg-[#f87171]/8 border-[#f87171]/20">rejected</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 max-w-[280px]">
                     {inv.summary
                       ? <span className="text-[11px] text-white/45 leading-snug line-clamp-2">{inv.summary}</span>

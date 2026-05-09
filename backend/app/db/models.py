@@ -50,6 +50,7 @@ class HILInboxItem(Base):
         UUID(as_uuid=True), ForeignKey("investigations.id")
     )
     proposed_action: Mapped[str] = mapped_column(String)
+    reasoning: Mapped[str | None] = mapped_column(String, nullable=True)
     idempotency_key: Mapped[str] = mapped_column(String, unique=True)
     status: Mapped[str] = mapped_column(String, default="pending")
     approver_user_id: Mapped[str | None] = mapped_column(String, nullable=True)
