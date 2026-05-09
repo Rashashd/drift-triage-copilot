@@ -13,7 +13,11 @@ app = FastAPI(title="Drift Triage Co-Pilot", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8501", "http://frontend:8501"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8501",
+        "http://frontend:8501",
+    ],
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
 )
