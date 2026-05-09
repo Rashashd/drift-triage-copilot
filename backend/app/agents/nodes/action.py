@@ -36,7 +36,9 @@ async def action_node(state: InvestigationState, config: RunnableConfig) -> dict
                     status="pending",
                 )
                 session.add(hil_item)
-                investigation = await session.get(Investigation, uuid.UUID(state["investigation_id"]))
+                investigation = await session.get(
+                    Investigation, uuid.UUID(state["investigation_id"])
+                )
                 if investigation:
                     investigation.status = "pending_approval"
                 await session.commit()
