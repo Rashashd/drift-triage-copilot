@@ -1,0 +1,139 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: project5
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: drift_triage_copilot
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U project5 -d drift_triage_copilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://project5:app@postgres:5432/drift_triage_copilot
+      REDIS_URL: redis://redis:6379/0
+      PLATFORM_BASE_URL: http://platform:8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+      - ./contracts:/contracts
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: uv run python -m app.worker
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://project5:app@postgres:5432/drift_triage_copilot
+      REDIS_URL: redis://redis:6379/0
+      PLATFORM_BASE_URL: http://platform:8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+      - ./contracts:/contracts
+
+  platform:
+    build:
+      context: .
+      dockerfile: platform/Dockerfile
+    # The --reload flag makes uvicorn restart on code changes — handy in dev,
+    # never in prod. The volume mounts below are what reload depends on:
+    # without them, code changes inside ./platform/app wouldn't be visible.
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    ports:
+      - "8001:8001"  # host:container — agent is on 8000, platform on 8001
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://project5:app@postgres:5432/drift_triage_copilot
+      REDIS_URL: redis://redis:6379/0
+      AGENT_BASE_URL: http://backend:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./platform/app:/app/app
+      - ./contracts:/app/contracts
+      - ./platform/mlops:/app/mlops    # mlops/ lives inside platform/; mounted into container at /app/mlops
+      - ./mlruns:/app/mlruns           # shared MLflow registry between platform and platform-worker
+
+  platform-worker:
+    build:
+      context: .
+      dockerfile: platform/Dockerfile
+    # Override the API's uvicorn command — same image, different entry point.
+    command: uv run python -m app.worker
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://project5:app@postgres:5432/drift_triage_copilot
+      REDIS_URL: redis://redis:6379/0
+      AGENT_BASE_URL: http://backend:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./platform/app:/app/app
+      - ./contracts:/app/contracts
+      - ./platform/mlops:/app/mlops
+      - ./mlruns:/app/mlruns           # shared MLflow registry between platform and platform-worker
+
+  website:
+    build:
+      context: frontend/website
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # These URLs are resolved by the browser, so they must use localhost
+      # (the host-exposed ports), not the container service names.
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
+      NEXT_PUBLIC_PLATFORM_URL: http://localhost:8001
+      NEXT_PUBLIC_AGENT_TOKEN: ${AGENT_TOKEN}
+    depends_on:
+      - backend
+      - platform
+    volumes:
+      - ./frontend/website/app:/app/app
+      - ./frontend/website/lib:/app/lib
+
+volumes:
+  postgres_data:
+  redis_data:

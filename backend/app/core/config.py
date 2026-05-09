@@ -1,0 +1,19 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore")
+
+    database_url: str
+    redis_url: str
+    openai_api_key: str = ""
+    anthropic_api_key: str = ""
+    langsmith_api_key: str = ""
+    langsmith_tracing: bool = False
+    langsmith_project: str = "drift-triage-copilot"
+    langsmith_endpoint: str = "https://api.smith.langchain.com"
+    platform_base_url: str = ""
+    agent_token: str = ""
+
+
+settings = Settings()
