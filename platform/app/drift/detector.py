@@ -23,9 +23,13 @@ def psi_numeric(
     actual_pct = actual_counts / max(len(actual_values), 1)
     expected_pct = np.asarray(reference_frequencies, dtype=float)
 
-    # Smooth zeros so log doesn't blow up.
+    # Smooth zeros and renormalize so proportions still sum to 1.
+    # Without renormalization, empty bins at ε inflate PSI artificially
+    # when n is small (e.g. 50 samples with 10 bins → several empty bins).
     actual_pct = np.where(actual_pct == 0, _EPSILON, actual_pct)
+    actual_pct = actual_pct / actual_pct.sum()
     expected_pct = np.where(expected_pct == 0, _EPSILON, expected_pct)
+    expected_pct = expected_pct / expected_pct.sum()
 
     return float(np.sum((actual_pct - expected_pct) * np.log(actual_pct / expected_pct)))
 
