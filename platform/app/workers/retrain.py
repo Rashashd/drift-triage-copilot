@@ -81,12 +81,7 @@ async def handle_retrain(job: ActionJob, session: AsyncSession) -> dict:
     versions = client.search_model_versions(f"name='{settings.model_name}' and run_id='{run_id}'")
     new_version = str(versions[0].version) if versions else None
     if new_version:
-        client.transition_model_version_stage(
-            name=settings.model_name,
-            version=new_version,
-            stage="Staging",
-            archive_existing_versions=False,
-        )
+        client.set_registered_model_alias(settings.model_name, "staging", new_version)
 
     logger.info("retrain.complete", job_id=str(job.id), test_accuracy=test_score, test_recall=test_recall, staged_version=new_version)
     return {

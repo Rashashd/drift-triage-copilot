@@ -23,15 +23,12 @@ async def staging_info(request: Request) -> dict:
     model_name = request.app.state.loaded_model.model_name
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     client = mlflow.MlflowClient()
-    staging_versions = [
-        mv for mv in client.search_model_versions(f"name='{model_name}'")
-        if mv.current_stage == "Staging"
-    ]
-    if not staging_versions:
+    try:
+        mv = client.get_model_version_by_alias(model_name, "staging")
+        return {
+            "model_name": model_name,
+            "staging_version": mv.version,
+            "model_uri": f"models:/{model_name}/{mv.version}",
+        }
+    except mlflow.exceptions.MlflowException:
         return {"model_name": model_name, "staging_version": None, "model_uri": None}
-    latest = max(staging_versions, key=lambda mv: int(mv.version))
-    return {
-        "model_name": model_name,
-        "staging_version": latest.version,
-        "model_uri": f"models:/{model_name}/{latest.version}",
-    }

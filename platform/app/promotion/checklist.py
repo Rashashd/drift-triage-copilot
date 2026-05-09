@@ -29,20 +29,16 @@ def check_version_exists(name: str, version: str) -> ChecklistResult:
 def check_not_already_production(name: str, version: str) -> ChecklistResult:
     """Refuse to re-promote — silent no-op would mask bugs."""
     try:
-        mv = _client().get_model_version(name, version)
-        if mv.current_stage == "Production":
+        prod = _client().get_model_version_by_alias(name, "production")
+        if prod.version == version:
             return ChecklistResult(
                 name="not_already_production",
                 passed=False,
-                detail=f"v{version} is already Production",
+                detail=f"v{version} already has the 'production' alias",
             )
-        return ChecklistResult(
-            name="not_already_production",
-            passed=True,
-            detail=f"current_stage={mv.current_stage}",
-        )
-    except MlflowException as exc:
-        return ChecklistResult(name="not_already_production", passed=False, detail=str(exc))
+    except MlflowException:
+        pass  # no production alias set yet — fine to promote
+    return ChecklistResult(name="not_already_production", passed=True, detail="not currently production")
 
 
 def check_reference_stats_exist() -> ChecklistResult:
